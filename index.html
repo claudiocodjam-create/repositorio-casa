@@ -69,6 +69,11 @@
   .bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
   .bv{width:70%;background:var(--acc);border-radius:4px 4px 0 0;min-height:1px}
   .bar small{font-size:11px;color:var(--muted);margin-top:4px}
+  .pair{flex:1;width:84%;display:flex;align-items:flex-end;justify-content:center;gap:2px}
+  .pair .bv{width:50%}
+  .bv.prev{background:#b9c2cc}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin:10px 0 6px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
   .cats{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 14px}
   .crow{display:grid;grid-template-columns:150px 1fr 110px 40px;gap:10px;align-items:center;padding:5px 0;font-size:13px}
   .crow b{text-align:right}
@@ -488,6 +493,32 @@ function renderGastos(){
     kpi('Mes con mayor gasto', total ? MESES[top] + ' · ' + clp(mt[top]) : '—') + kpi('Pendiente de pago', clp(pend)) + '</div>';
   const mx = Math.max(1, ...mt);
   h += '<h3>Gasto por mes</h3><div class="bars">' + mt.map((v, i) => '<div class="bar" title="' + MESES[i] + ': ' + clp(v) + '"><div class="bv" style="height:' + (v / mx * 100) + '%"></div><small>' + MESES[i] + '</small></div>').join('') + '</div>';
+  // ---- Comparación con meses y años anteriores (respeta el filtro de categoría) ----
+  const sumYM = (yy, mm) => GASTOS.filter(g => +g.fecha.slice(0, 4) === yy && +g.fecha.slice(5, 7) === mm + 1 && (!fc || g.cat === fc)).reduce((a, g) => a + g.monto, 0);
+  const cur = Array.from({ length: 12 }, (_, i) => sumYM(y, i)), prev = Array.from({ length: 12 }, (_, i) => sumYM(y - 1, i));
+  let lm = (y === new Date().getFullYear()) ? new Date().getMonth() : 11;
+  while (lm > 0 && !cur[lm]) lm--;
+  const pm = lm > 0 ? cur[lm - 1] : sumYM(y - 1, 11);
+  const ytdC = cur.slice(0, lm + 1).reduce((a, b) => a + b, 0), ytdP = prev.slice(0, lm + 1).reduce((a, b) => a + b, 0);
+  const vr = (a, b) => b ? (a - b) / b * 100 : null;
+  const vtxt = v => v === null ? 'sin datos previos' : (v > 0 ? '▲ ' : v < 0 ? '▼ ' : '') + Math.abs(v).toFixed(1).replace('.', ',') + '%';
+  const vcol = v => v === null ? 'var(--muted)' : v > 0 ? '#c0392b' : '#1e8449';
+  const kv = (t, val, v, sub) => '<div class="kpi"><small>' + t + '</small><b>' + val + '</b><div style="font-size:12px;margin-top:2px;color:' + vcol(v) + '">' + vtxt(v) + (v === null ? '' : ' ' + sub) + '</div></div>';
+  h += '<h3>Comparación con períodos anteriores' + (fc ? ' · ' + esc(fc) : '') + '</h3><div class="kpis">' +
+    kv(MESES[lm] + ' ' + y + ' vs mes anterior', clp(cur[lm]), vr(cur[lm], pm), 'vs ' + (lm > 0 ? MESES[lm - 1] : 'Dic ' + (y - 1))) +
+    kv(MESES[lm] + ' ' + y + ' vs ' + MESES[lm] + ' ' + (y - 1), clp(cur[lm]), vr(cur[lm], prev[lm]), 'vs ' + clp(prev[lm])) +
+    kv('Acumulado Ene–' + MESES[lm] + ' ' + y, clp(ytdC), vr(ytdC, ytdP), 'vs ' + clp(ytdP) + ' en ' + (y - 1)) + '</div>';
+  const mx2 = Math.max(1, ...cur, ...prev);
+  h += '<div class="legend"><span><i style="background:#b9c2cc"></i>' + (y - 1) + '</span><span><i style="background:var(--acc)"></i>' + y + '</span></div><div class="bars">' +
+    cur.map((v, i) => '<div class="bar" title="' + MESES[i] + ' ' + (y - 1) + ': ' + clp(prev[i]) + ' · ' + MESES[i] + ' ' + y + ': ' + clp(v) + '"><div class="pair"><div class="bv prev" style="height:' + (prev[i] / mx2 * 100) + '%"></div><div class="bv" style="height:' + (v / mx2 * 100) + '%"></div></div><small>' + MESES[i] + '</small></div>').join('') + '</div>';
+  h += '<h3>Variación mes a mes ' + y + '</h3><div class="tscroll"><table><thead><tr><th>Mes</th><th>' + y + '</th><th>vs mes anterior</th><th>' + (y - 1) + '</th><th>vs año anterior</th></tr></thead><tbody>' +
+    cur.map((v, i) => (v || prev[i]) ? '<tr><td>' + MESES[i] + '</td><td><b>' + clp(v) + '</b></td><td style="color:' + vcol(vr(v, i ? cur[i - 1] : sumYM(y - 1, 11))) + '">' + vtxt(vr(v, i ? cur[i - 1] : sumYM(y - 1, 11))) + '</td><td>' + (prev[i] ? clp(prev[i]) : '—') + '</td><td style="color:' + vcol(vr(v, prev[i])) + '">' + vtxt(vr(v, prev[i])) + '</td></tr>' : '').join('') + '</tbody></table></div>';
+  if (!fc){
+    const ct = yy => { const o = {}; GASTOS.filter(g => +g.fecha.slice(0, 4) === yy && +g.fecha.slice(5, 7) <= lm + 1).forEach(g => { o[g.cat] = (o[g.cat] || 0) + g.monto; }); return o; };
+    const cy = ct(y), cp = ct(y - 1), ks = Object.keys(Object.assign({}, cp, cy)).sort((a, b) => (cy[b] || 0) - (cy[a] || 0));
+    if (ks.length) h += '<h3>Por categoría: ' + y + ' vs ' + (y - 1) + ' (Ene–' + MESES[lm] + ')</h3><div class="tscroll"><table><thead><tr><th>Categoría</th><th>' + (y - 1) + '</th><th>' + y + '</th><th>Variación</th></tr></thead><tbody>' +
+      ks.map(c => { const v = vr(cy[c] || 0, cp[c] || 0); return '<tr><td>' + esc(c) + '</td><td>' + (cp[c] ? clp(cp[c]) : '—') + '</td><td>' + (cy[c] ? clp(cy[c]) : '—') + '</td><td style="color:' + vcol(v) + '">' + vtxt(v) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+  }
   if (cats.length){
     h += '<h3>Por categoría</h3><div class="cats">' + cats.slice().sort((a, b) => catTot[b] - catTot[a]).map(c =>
       '<div class="crow"><span>' + esc(c) + '</span><div class="cbar"><div style="width:' + (catTot[c] / total * 100) + '%"></div></div><b>' + clp(catTot[c]) + '</b><small>' + Math.round(catTot[c] / total * 100) + '%</small></div>').join('') + '</div>';
