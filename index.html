@@ -110,7 +110,7 @@
 <body>
 <header>
   <h1>📁 <span>Repositorio de Documentos</span></h1>
-  <nav class="tabs"><button class="tab on" data-tab="docs">📁 Documentos</button><button class="tab" data-tab="lib">📚 Biblioteca</button><button class="tab" data-tab="gastos">🏠 Gastos</button></nav>
+  <nav class="tabs"><button class="tab on" data-tab="docs">📁 Documentos</button><button class="tab" data-tab="lib">📚 Biblioteca en preparación</button><button class="tab" data-tab="gastos">🏠 Gastos</button></nav>
   <input id="q" type="search" placeholder="Buscar por nombre, trabajador, tipo de documento…" autocomplete="off">
   <select id="ftype">
     <option value="">Todos los tipos</option>
@@ -561,7 +561,7 @@ let LIB = null, LIBMAP = {}, COVERS = {}, covQueue = [], covBusy = false, covObs
 try { LPW = sessionStorage.getItem('repo_lpw') || ''; } catch (e) {}
 function libLogin(msg){
   $('grid').innerHTML = '<form id="llf" style="grid-column:1/-1;max-width:330px;margin:40px auto;background:#fff;padding:24px;border:1px solid var(--line);border-radius:12px;text-align:center">' +
-    '<h3 style="margin-top:0">🔒 Biblioteca</h3><p style="color:var(--muted);font-size:13px">Esta sección tiene una contraseña aparte.</p>' +
+    '<h3 style="margin-top:0">🔒 Biblioteca en preparación</h3><p style="color:var(--muted);font-size:13px">Esta sección tiene una contraseña aparte.</p>' +
     '<input id="lpw" type="password" placeholder="Contraseña de la biblioteca" autocomplete="off" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;margin:8px 0;font-size:15px">' +
     '<button class="pri" style="width:100%">Entrar</button><div style="color:#c0392b;font-size:13px;margin-top:8px">'+esc(msg || '')+'</div></form>';
   $('lpw').focus();
