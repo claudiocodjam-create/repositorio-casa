@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_blank">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repositorio de Documentos</title>
+<style>
+  :root{--bg:#f6f7f9;--card:#fff;--line:#e3e6ea;--txt:#1f2328;--muted:#6b7280;--acc:#f37a1f;--acc2:#c95f0c;--hover:#fff4ec}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
+  header{display:flex;gap:10px;align-items:center;padding:12px 18px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+  header h1{font-size:17px;margin:0 14px 0 0;white-space:nowrap}
+  header h1 span{color:var(--acc)}
+  #q{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+  select,button{padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:13px;cursor:pointer}
+  button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+  button.pri:hover{background:var(--acc2)}
+  .wrap{display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 62px)}
+  aside{border-right:1px solid var(--line);background:var(--card);overflow:auto;padding:10px 6px}
+  main{overflow:auto;padding:16px 22px}
+  .tree ul{list-style:none;margin:0;padding-left:14px}
+  .tree>ul{padding-left:0}
+  .tnode{display:flex;align-items:center;gap:4px;padding:5px 6px;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tnode:hover{background:var(--hover)}
+  .tnode.sel{background:var(--acc);color:#fff}
+  .tog{width:14px;display:inline-block;text-align:center;color:var(--muted);font-size:10px}
+  .tnode.sel .tog{color:#fff}
+  .crumbs{font-size:13px;color:var(--muted);margin-bottom:12px}
+  .crumbs a{color:var(--acc2);cursor:pointer;text-decoration:none}
+  .crumbs a:hover{text-decoration:underline}
+  h2{font-size:18px;margin:0 0 14px}
+  .folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:18px}
+  .fcard{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;display:flex;gap:10px;align-items:center}
+  .fcard:hover{border-color:var(--acc);background:var(--hover)}
+  .fcard small{display:block;color:var(--muted);font-size:12px}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{background:#fafbfc;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fcfcfd}
+  td.name{font-weight:500;min-width:170px;word-break:break-word}
+  td.acts{white-space:nowrap}
+  @media(max-width:1000px){.wrap{grid-template-columns:200px 1fr} main{padding:12px} th:nth-last-child(2),td:nth-last-child(2),th:nth-last-child(3),td:nth-last-child(3){display:none}}
+  td.path{color:var(--muted);font-size:12px}
+  td.acts{white-space:nowrap;text-align:right}
+  td.acts a,td.acts button{display:inline-block;margin-left:4px;padding:5px 10px;border:1px solid var(--line);border-radius:6px;font-size:12px;color:var(--txt);text-decoration:none;background:#fff}
+  td.acts .dl{background:var(--acc);border-color:var(--acc);color:#fff}
+  button:disabled{opacity:.6;cursor:wait}
+  .ico{font-size:18px;width:22px;display:inline-block;text-align:center}
+  .empty,.msg{color:var(--muted);padding:30px;text-align:center}
+  .stats{font-size:12px;color:var(--muted);margin-left:auto}
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:20;padding:3vh 3vw}
+  #modal .box{background:#fff;border-radius:10px;height:100%;display:flex;flex-direction:column;overflow:hidden}
+  #modal .bar{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+  #modal .bar b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #modal .bar a{padding:6px 12px;border:1px solid var(--line);border-radius:6px;text-decoration:none;color:var(--txt);font-size:13px}
+  #modal .bar a.dl{background:var(--acc);color:#fff;border-color:var(--acc)}
+  #modal iframe{flex:1;border:0;width:100%}
+  @media(max-width:800px){.wrap{grid-template-columns:1fr}aside{display:none}}
+  .tabs{display:flex;gap:4px}
+  #gastosview{display:none;height:calc(100vh - 62px);overflow:auto;padding:16px 22px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+  .kpi small{display:block;color:var(--muted);font-size:12px;margin-bottom:2px}
+  .kpi b{font-size:20px}
+  #gbody h3{font-size:15px;margin:24px 0 10px}
+  .bars{display:flex;align-items:flex-end;gap:6px;height:170px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 12px 4px}
+  .bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bv{width:70%;background:var(--acc);border-radius:4px 4px 0 0;min-height:1px}
+  .bar small{font-size:11px;color:var(--muted);margin-top:4px}
+  .cats{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 14px}
+  .crow{display:grid;grid-template-columns:150px 1fr 110px 40px;gap:10px;align-items:center;padding:5px 0;font-size:13px}
+  .crow b{text-align:right}
+  .crow small{color:var(--muted);text-align:right}
+  .cbar{background:#f1f3f5;border-radius:6px;height:10px;overflow:hidden}
+  .cbar div{background:var(--acc);height:100%}
+  .tscroll{overflow-x:auto}
+  .tscroll td,.tscroll th{white-space:nowrap}
+  .chip.ok{background:#e6f4ea;color:#1e7e34}
+  .chip.pend{background:#fdecea;color:#c0392b}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:30;align-items:center;justify-content:center;padding:12px}
+  .gform{background:#fff;border-radius:12px;padding:20px;width:440px;max-width:100%;max-height:92vh;overflow:auto;display:flex;flex-direction:column;gap:10px}
+  .gform h3{margin:0}
+  .gform label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:4px}
+  .gform input,.gform select,.gform textarea{padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;color:var(--txt);font-family:inherit;background:#fff}
+  .gform .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .gbtns{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+  @media(max-width:700px){.crow{grid-template-columns:95px 1fr 90px}.crow small{display:none}#gastosview{padding:12px}}
+  .tab.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  #libview{display:none;height:calc(100vh - 62px);overflow:auto;padding:16px 22px}
+  .libbar{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:20px}
+  .book{cursor:pointer;text-align:center}
+  .book .cv{aspect-ratio:2/3;background:linear-gradient(135deg,#e9ecef,#cfd5db);border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.18);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:12px;color:#555;padding:8px;transition:transform .15s,box-shadow .15s}
+  .book .cv:has(img){padding:0}
+  .book:hover .cv{transform:translateY(-3px);box-shadow:0 8px 18px rgba(0,0,0,.25)}
+  .book .cv img{width:100%;height:100%;object-fit:cover;display:block}
+  .book .t{font-weight:600;font-size:13px;margin-top:8px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .book .a{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bd{display:flex;gap:24px;padding:14px}
+  .bd .cv{width:200px;flex:none}
+  .bd .cv img{width:100%;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+  .bd h3{margin:0 0 4px;font-size:21px}
+  .chip{display:inline-block;background:#f1f3f5;border-radius:12px;padding:3px 10px;font-size:12px;margin:2px}
+  .fmt{margin:12px 8px 0 0}
+  @media(max-width:700px){.bd{flex-direction:column;align-items:center}.bd .cv{width:160px}.grid{grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:14px}#libview{padding:12px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>📁 <span>Repositorio de Documentos</span></h1>
+  <nav class="tabs"><button class="tab on" data-tab="docs">📁 Documentos</button><button class="tab" data-tab="lib">📚 Biblioteca</button><button class="tab" data-tab="gastos">🏠 Gastos</button></nav>
+  <input id="q" type="search" placeholder="Buscar por nombre, trabajador, tipo de documento…" autocomplete="off">
+  <select id="ftype">
+    <option value="">Todos los tipos</option>
+    <option value="pdf">PDF</option>
+    <option value="word">Word / Docs</option>
+    <option value="excel">Excel / Sheets</option>
+    <option value="img">Imágenes</option>
+    <option value="otro">Otros</option>
+  </select>
+  <button class="pri" id="refresh" title="Volver a leer Google Drive">⟳ Actualizar</button>
+  <span class="stats" id="stats"></span>
+</header>
+<div class="wrap">
+  <aside><div class="tree" id="tree"><div class="msg">Cargando…</div></div></aside>
+  <main id="main"><div class="msg">Leyendo carpetas de Google Drive…</div></main>
+</div>
+
+<div id="gastosview">
+  <div class="libbar">
+    <button class="pri" id="gnew">+ Nuevo gasto</button>
+    <select id="gyear"></select>
+    <select id="gcat"><option value="">Todas las categorías</option></select>
+    <button id="grefresh" title="Recargar">⟳</button>
+    <a id="gsheet" href="#" style="font-size:13px;margin-left:auto;color:var(--acc2)">Abrir en Google Sheets</a>
+  </div>
+  <div id="gbody"></div>
+</div>
+
+<div id="gmodal" class="ov">
+  <form id="gf" class="gform" autocomplete="off">
+    <h3 id="gftitle">Nuevo gasto</h3>
+    <input type="hidden" id="g_id">
+    <div class="two"><label>Fecha<input type="date" id="g_fecha" required></label><label>Categoría<select id="g_cat" required></select></label></div>
+    <label>Monto ($)<input type="number" id="g_monto" min="1" step="1" required inputmode="numeric" placeholder="Ej: 25990"></label>
+    <label>Proveedor / detalle<input id="g_detalle" placeholder="Ej: Esval, CGE, Metrogas, Copec…"></label>
+    <div class="two"><label>Consumo<input type="number" id="g_consumo" step="0.01" min="0" inputmode="decimal" placeholder="Opcional"></label><label>Unidad<select id="g_unidad"><option></option><option>m³</option><option>kWh</option><option>kg</option><option>L</option></select></label></div>
+    <div class="two"><label>Medio de pago<select id="g_medio"><option></option><option>Transferencia</option><option>Débito</option><option>Crédito</option><option>Efectivo</option><option>PAC/PAT</option></select></label><label>Estado<select id="g_estado"><option>Pagado</option><option>Pendiente</option></select></label></div>
+    <label>Notas<textarea id="g_notas" rows="2"></textarea></label>
+    <div id="gerr" style="color:#c0392b;font-size:13px"></div>
+    <div class="gbtns"><button type="button" id="gcancel">Cancelar</button><button class="pri" id="gsave">Guardar</button></div>
+  </form>
+</div>
+
+<div id="libview">
+  <div class="libbar">
+    <input id="lq" type="search" placeholder="Buscar título, autor, serie o etiqueta…" autocomplete="off" style="flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px">
+    <select id="llib" style="display:none"></select>
+    <select id="lsort"><option value="title">Título A-Z</option><option value="author">Autor</option><option value="recent">Recientes</option></select>
+    <button id="lrefresh" title="Volver a leer la biblioteca">⟳</button>
+    <span class="stats" id="lstats"></span>
+  </div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<div id="login" style="position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:50">
+  <form id="lf" style="background:#fff;padding:28px;border-radius:12px;border:1px solid var(--line);width:310px;max-width:90vw;text-align:center">
+    <h2>🔒 Repositorio de Documentos</h2>
+    <input id="pw" type="password" placeholder="Contraseña" autocomplete="current-password" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;margin:10px 0;font-size:15px">
+    <button class="pri" style="width:100%">Entrar</button>
+    <div id="lerr" style="color:#c0392b;font-size:13px;margin-top:10px"></div>
+  </form>
+</div>
+
+<div id="modal">
+  <div class="box">
+    <div class="bar">
+      <b id="mTitle"></b>
+      <a id="mOpen" href="#">Abrir en pestaña nueva</a>
+      <a id="mDl" class="dl" href="#" target="_self">⬇ Descargar</a>
+      <a href="#" id="mClose" target="_self">✕ Cerrar</a>
+    </div>
+    <div id="mMsg" class="msg" style="display:none"></div>
+    <iframe id="mFrame" style="display:none"></iframe>
+    <div id="mView" style="flex:1;overflow:auto;background:#525659;padding:10px;display:none"></div>
+  </div>
+</div>
+
+<script>
+/* Puente: reemplaza google.script.run llamando a la app por internet, sin cuentas de Google */
+(function(){
+  var EXEC = "https://script.google.com/macros/s/AKfycbzgm-96z9LApLfGk4I29SBRYpCT5-AQE4rV29TjJjk3ZcJqlbUfdbgQZy2dKSIDlrloxg/exec";
+  function call(fn, args, ok, fail){
+    fetch(EXEC, { method: 'POST', credentials: 'omit', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fn, args: args }) })
+    .then(function(r){ if (!r.ok) throw new Error('Servidor respondió ' + r.status); return r.json(); })
+    .then(function(d){ if (d.ok) { ok && ok(d.result); } else { fail && fail(new Error(d.error)); } })
+    .catch(function(e){ fail && fail(new Error('Sin conexión con el servidor (' + e.message + ')')); });
+  }
+  function mk(ok, fail){
+    var base = { withSuccessHandler: function(h){ return mk(h, fail); }, withFailureHandler: function(h){ return mk(ok, h); } };
+    return new Proxy(base, { get: function(t, k){ return k in t ? t[k] : function(){ call(k, Array.prototype.slice.call(arguments), ok, fail); }; } });
+  }
+  window.google = { script: { run: mk(null, null) } };
+})();
+</script>
+<script>
+let ROOT = null, BYID = {}, ALLFILES = [], CUR = null, OPEN = {}, PW = '';
+try { PW = sessionStorage.getItem('repo_pw') || ''; } catch (e) {}
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+function load(force){
+  $('main').innerHTML = '<div class="msg">Leyendo carpetas de Google Drive…</div>';
+  google.script.run
+    .withSuccessHandler(json => {
+      $('login').style.display = 'none';
+      try { sessionStorage.setItem('repo_pw', PW); } catch (e) {}
+      const data = JSON.parse(json);
+      if (data.error){ $('main').innerHTML = '<div class="msg">'+esc(data.error)+'</div>'; return; }
+      ROOT = data.tree; BYID = {}; ALLFILES = [];
+      index(ROOT, null);
+      OPEN[ROOT.id] = true;
+      $('stats').textContent = ALLFILES.length + ' archivos · actualizado ' +
+        new Date(data.generated).toLocaleString('es-CL', {dateStyle:'short', timeStyle:'short'});
+      renderTree();
+      go(CUR && BYID[CUR] ? CUR : ROOT.id);
+    })
+    .withFailureHandler(e => {
+      if (/Contraseña|APP_PASSWORD/.test(e.message)){
+        try { sessionStorage.removeItem('repo_pw'); } catch (x) {}
+        $('login').style.display = 'flex'; $('lerr').textContent = e.message; $('pw').value = ''; $('pw').focus();
+        return;
+      }
+      $('main').innerHTML = '<div class="msg">Error: '+esc(e.message)+'</div>';
+    })
+    .getTree(!!force, PW);
+}
+
+function index(node, parent){
+  node.parent = parent;
+  BYID[node.id] = node;
+  node.files.forEach(f => { f.folder = node; ALLFILES.push(f); });
+  node.folders.forEach(sub => index(sub, node));
+}
+
+function countFiles(n){ return n.files.length + n.folders.reduce((a, s) => a + countFiles(s), 0); }
+
+/* ---------- Árbol lateral ---------- */
+function renderTree(){ $('tree').innerHTML = '<ul>' + treeHTML(ROOT) + '</ul>'; }
+function treeHTML(n){
+  const has = n.folders.length > 0, open = OPEN[n.id];
+  let h = '<li><div class="tnode'+(n.id===CUR?' sel':'')+'" data-id="'+n.id+'">' +
+          '<span class="tog" data-tog="'+n.id+'">'+(has ? (open?'▼':'▶') : '')+'</span>📂 '+esc(n.name)+'</div>';
+  if (has && open) h += '<ul>' + n.folders.map(treeHTML).join('') + '</ul>';
+  return h + '</li>';
+}
+$('tree').addEventListener('click', e => {
+  const tog = e.target.closest('[data-tog]');
+  if (tog && tog.textContent){ OPEN[tog.dataset.tog] = !OPEN[tog.dataset.tog]; renderTree(); return; }
+  const n = e.target.closest('.tnode'); if (n) go(n.dataset.id);
+});
+
+/* ---------- Navegación ---------- */
+function go(id){
+  CUR = id;
+  let p = BYID[id].parent; while (p){ OPEN[p.id] = true; p = p.parent; }
+  $('q').value = '';
+  renderTree(); renderFolder();
+}
+
+function crumbs(n){
+  const parts = []; let p = n;
+  while (p){ parts.unshift(p); p = p.parent; }
+  return '<div class="crumbs">' + parts.map((x, i) => i === parts.length-1 ? '<b>'+esc(x.name)+'</b>'
+         : '<a target="_self" data-go="'+x.id+'">'+esc(x.name)+'</a>').join(' › ') + '</div>';
+}
+
+function renderFolder(){
+  const n = BYID[CUR], t = $('ftype').value;
+  let h = crumbs(n) + '<h2>📂 '+esc(n.name)+'</h2>';
+  if (n.folders.length){
+    h += '<div class="folders">' + n.folders.map(f =>
+      '<div class="fcard" data-go="'+f.id+'"><span class="ico">📁</span><div>'+esc(f.name)+
+      '<small>'+f.folders.length+' carpetas · '+countFiles(f)+' archivos</small></div></div>').join('') + '</div>';
+  }
+  const files = n.files.filter(f => !t || kind(f.mime) === t);
+  h += files.length ? table(files, false) : (n.folders.length ? '' : '<div class="empty">Esta carpeta está vacía.</div>');
+  $('main').innerHTML = h;
+}
+
+function renderSearch(){
+  const q = norm($('q').value.trim()), t = $('ftype').value;
+  if (!q && !t){ renderFolder(); return; }
+  const words = q.split(/\s+/).filter(Boolean);
+  const res = ALLFILES.filter(f => {
+    const hay = norm(f.name + ' ' + f.folder.path);
+    return words.every(w => hay.includes(w)) && (!t || kind(f.mime) === t);
+  });
+  $('main').innerHTML = '<h2>🔎 '+res.length+' resultado(s)</h2>' +
+    (res.length ? table(res.slice(0, 500), true) : '<div class="empty">Sin resultados.</div>');
+}
+
+$('main').addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if (g){ go(g.dataset.go); return; }
+  const v = e.target.closest('[data-view]'); if (v){ preview(v.dataset.view); return; }
+  const d = e.target.closest('[data-dl]'); if (d) download(FILEMAP[d.dataset.dl], d);
+});
+let tmr; $('q').addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(renderSearch, 150); });
+$('ftype').addEventListener('change', renderSearch);
+$('refresh').addEventListener('click', () => load(true));
+
+/* ---------- Tabla de archivos ---------- */
+const FILEMAP = {};
+function table(files, withPath){
+  return '<table><thead><tr><th></th><th>Nombre</th>'+(withPath?'<th>Ubicación</th>':'')+
+    '<th>Modificado</th><th>Tamaño</th><th></th></tr></thead><tbody>' +
+    files.map(f => { FILEMAP[f.id] = f; return '<tr><td><span class="ico">'+icon(f.mime)+'</span></td>' +
+      '<td class="name">'+esc(f.name)+'</td>' +
+      (withPath ? '<td class="path"><a target="_self" data-go="'+f.folder.id+'" style="cursor:pointer;color:inherit">'+esc(f.folder.path)+'</a></td>' : '') +
+      '<td>'+new Date(f.updated).toLocaleDateString('es-CL')+'</td>' +
+      '<td>'+size(f.size)+'</td>' +
+      '<td class="acts"><button data-view="'+f.id+'">👁 Ver</button>' +
+      '<button class="dl" data-dl="'+f.id+'">⬇ Descargar</button></td></tr>'; }).join('') +
+    '</tbody></table>';
+}
+
+const BLOBS = {};
+function fetchFile(f, cb, btn){
+  if (BLOBS[f.id]) return cb(BLOBS[f.id]);
+  const old = btn ? btn.textContent : '';
+  if (btn){ btn.disabled = true; btn.textContent = '⏳'; }
+  google.script.run
+    .withSuccessHandler(d => {
+      if (btn){ btn.disabled = false; btn.textContent = old; }
+      const bin = atob(d.data), arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const r = { url: URL.createObjectURL(new Blob([arr], {type: d.mime})), name: d.name, mime: d.mime, bytes: arr };
+      BLOBS[f.id] = r; cb(r);
+    })
+    .withFailureHandler(e => {
+      if (btn){ btn.disabled = false; btn.textContent = old; }
+      $('modal').style.display = 'block'; $('mFrame').style.display = 'none';
+      $('mMsg').style.display = 'block'; $('mMsg').textContent = 'No se pudo obtener el archivo: ' + e.message;
+    })
+    .getFileData(f.id, PW, LPW);
+}
+function saveBlob(r){
+  const a = document.createElement('a');
+  a.href = r.url; a.download = r.name; a.target = '_self';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function download(f, btn){ fetchFile(f, saveBlob, btn); }
+
+const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+function loadPdfJs(){
+  if (window._pdfReady) return window._pdfReady;
+  window._pdfReady = new Promise((ok, fail) => {
+    const s = document.createElement('script');
+    s.src = PDFJS + 'pdf.min.js';
+    s.onload = () => fetch(PDFJS + 'pdf.worker.min.js').then(x => x.text()).then(t => {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([t], {type: 'text/javascript'})); ok();
+    }).catch(() => { pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'pdf.worker.min.js'; ok(); });
+    s.onerror = () => { window._pdfReady = null; fail(new Error('visor no disponible')); };
+    document.head.appendChild(s);
+  });
+  return window._pdfReady;
+}
+async function renderPdf(r, v){
+  try {
+    await loadPdfJs();
+    const pdf = await pdfjsLib.getDocument({data: r.bytes.slice()}).promise;
+    $('mMsg').style.display = 'none'; v.style.display = 'block';
+    const w = Math.max(300, v.clientWidth - 20);
+    for (let p = 1; p <= pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const base = page.getViewport({scale: 1});
+      const vp = page.getViewport({scale: Math.min(2, w / base.width) * (window.devicePixelRatio || 1)});
+      const c = document.createElement('canvas');
+      c.width = vp.width; c.height = vp.height;
+      c.style.cssText = 'display:block;margin:0 auto 10px;width:' + Math.min(w, base.width * 2) + 'px;max-width:100%;background:#fff';
+      v.appendChild(c);
+      await page.render({canvasContext: c.getContext('2d'), viewport: vp}).promise;
+    }
+  } catch (e) {
+    $('mMsg').style.display = 'block';
+    $('mMsg').textContent = 'No se pudo mostrar el PDF (' + e.message + '). Usa Descargar.';
+  }
+}
+
+function preview(id){
+  const f = FILEMAP[id];
+  $('mTitle').textContent = f.name;
+  $('mFrame').style.display = 'none';
+  $('mOpen').style.display = ''; $('mDl').style.display = '';
+  $('mView').style.display = 'none'; $('mView').innerHTML = ''; $('mView').style.background = '#525659';
+  $('mMsg').style.display = 'block';
+  $('mMsg').textContent = 'Cargando archivo…';
+  $('modal').style.display = 'block';
+  fetchFile(f, r => {
+    $('mOpen').href = r.url;
+    $('mDl').onclick = e => { e.preventDefault(); saveBlob(r); };
+    const v = $('mView'); v.innerHTML = '';
+    if (/^image\//.test(r.mime)){
+      $('mMsg').style.display = 'none'; v.style.display = 'block';
+      v.innerHTML = '<img src="'+r.url+'" style="max-width:100%;display:block;margin:auto">';
+    } else if (r.mime === 'application/pdf'){
+      $('mMsg').textContent = 'Abriendo PDF…';
+      renderPdf(r, v);
+    } else {
+      $('mMsg').textContent = 'Este tipo de archivo no tiene vista previa. Usa Descargar.';
+    }
+  });
+}
+$('mClose').addEventListener('click', e => { e.preventDefault(); $('modal').style.display = 'none'; $('mFrame').src = 'about:blank'; $('mView').innerHTML = ''; $('mView').style.display = 'none'; if ($('mView')._keys){ document.removeEventListener('keyup', $('mView')._keys); $('mView')._keys = null; } });
+
+/* ---------- Utilidades ---------- */
+function kind(m){
+  if (m === 'application/pdf') return 'pdf';
+  if (/word|document/.test(m)) return 'word';
+  if (/sheet|excel|csv/.test(m)) return 'excel';
+  if (/^image\//.test(m)) return 'img';
+  return 'otro';
+}
+function icon(m){ return {pdf:'📕', word:'📘', excel:'📗', img:'🖼️'}[kind(m)] || '📄'; }
+function size(b){
+  if (!b) return '—';
+  const u = ['B','KB','MB','GB']; let i = 0;
+  while (b >= 1024 && i < 3){ b /= 1024; i++; }
+  return b.toFixed(i ? 1 : 0) + ' ' + u[i];
+}
+
+/* ---------- Gastos del hogar ---------- */
+const CATS = ['Agua', 'Luz', 'Gas', 'Internet/TV', 'Teléfono', 'Supermercado', 'Combustible', 'Arriendo/Dividendo', 'Gastos comunes', 'Transporte', 'Salud', 'Educación', 'Otros'];
+const UNIT = { Agua: 'm³', Luz: 'kWh', Gas: 'm³', Combustible: 'L' };
+const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+let GASTOS = null;
+const clp = n => '$' + Math.round(n || 0).toLocaleString('es-CL');
+const num = n => (+n).toLocaleString('es-CL', { maximumFractionDigits: 2 });
+const fmtD = s => s.slice(8, 10) + '-' + s.slice(5, 7) + '-' + s.slice(0, 4);
+const kpi = (l, v) => '<div class="kpi"><small>' + l + '</small><b>' + v + '</b></div>';
+const today = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+CATS.forEach(c => {
+  $('g_cat').insertAdjacentHTML('beforeend', '<option>' + c + '</option>');
+  $('gcat').insertAdjacentHTML('beforeend', '<option>' + c + '</option>');
+});
+
+function gastosData(d){
+  GASTOS = d.rows;
+  if (d.url) $('gsheet').href = d.url;
+}
+function loadGastos(){
+  $('gbody').innerHTML = '<div class="msg">Cargando gastos…</div>';
+  google.script.run
+    .withSuccessHandler(j => { gastosData(JSON.parse(j)); fillYears(); renderGastos(); })
+    .withFailureHandler(e => { $('gbody').innerHTML = '<div class="msg">Error: ' + esc(e.message) + '</div>'; })
+    .getGastos(PW);
+}
+function fillYears(sel){
+  const now = new Date().getFullYear(), cur = sel || +$('gyear').value || now, ys = new Set([now, cur]);
+  GASTOS.forEach(g => ys.add(+g.fecha.slice(0, 4)));
+  $('gyear').innerHTML = [...ys].sort((a, b) => b - a).map(y => '<option' + (y === cur ? ' selected' : '') + '>' + y + '</option>').join('');
+}
+function renderGastos(){
+  const y = +$('gyear').value, fc = $('gcat').value;
+  const rows = GASTOS.filter(g => +g.fecha.slice(0, 4) === y);
+  const m = Array.from({ length: 12 }, () => ({}));
+  const cons = Array.from({ length: 12 }, () => ({ Agua: 0, Luz: 0, Gas: 0 }));
+  const catTot = {};
+  let total = 0, pend = 0;
+  rows.forEach(g => {
+    const i = +g.fecha.slice(5, 7) - 1;
+    m[i][g.cat] = (m[i][g.cat] || 0) + g.monto;
+    catTot[g.cat] = (catTot[g.cat] || 0) + g.monto;
+    total += g.monto;
+    if (g.estado === 'Pendiente') pend += g.monto;
+    if (g.cat in cons[i] && g.consumo) cons[i][g.cat] += +g.consumo;
+  });
+  const mt = m.map(o => Object.values(o).reduce((a, b) => a + b, 0));
+  const used = mt.filter(v => v > 0).length, top = mt.indexOf(Math.max(...mt));
+  const cats = CATS.filter(c => catTot[c]).concat(Object.keys(catTot).filter(c => CATS.indexOf(c) < 0));
+  let h = '<div class="kpis">' + kpi('Total ' + y, clp(total)) + kpi('Promedio mensual', clp(used ? total / used : 0)) +
+    kpi('Mes con mayor gasto', total ? MESES[top] + ' · ' + clp(mt[top]) : '—') + kpi('Pendiente de pago', clp(pend)) + '</div>';
+  const mx = Math.max(1, ...mt);
+  h += '<h3>Gasto por mes</h3><div class="bars">' + mt.map((v, i) => '<div class="bar" title="' + MESES[i] + ': ' + clp(v) + '"><div class="bv" style="height:' + (v / mx * 100) + '%"></div><small>' + MESES[i] + '</small></div>').join('') + '</div>';
+  if (cats.length){
+    h += '<h3>Por categoría</h3><div class="cats">' + cats.slice().sort((a, b) => catTot[b] - catTot[a]).map(c =>
+      '<div class="crow"><span>' + esc(c) + '</span><div class="cbar"><div style="width:' + (catTot[c] / total * 100) + '%"></div></div><b>' + clp(catTot[c]) + '</b><small>' + Math.round(catTot[c] / total * 100) + '%</small></div>').join('') + '</div>';
+    h += '<h3>Detalle mensual</h3><div class="tscroll"><table><thead><tr><th>Mes</th>' + cats.map(c => '<th>' + esc(c) + '</th>').join('') + '<th>Total</th></tr></thead><tbody>' +
+      m.map((o, i) => mt[i] ? '<tr><td>' + MESES[i] + '</td>' + cats.map(c => '<td>' + (o[c] ? clp(o[c]) : '') + '</td>').join('') + '<td><b>' + clp(mt[i]) + '</b></td></tr>' : '').join('') +
+      '<tr><td><b>Total</b></td>' + cats.map(c => '<td><b>' + clp(catTot[c]) + '</b></td>').join('') + '<td><b>' + clp(total) + '</b></td></tr></tbody></table></div>';
+  }
+  if (cons.some(o => o.Agua || o.Luz || o.Gas)){
+    h += '<h3>Consumo y costo por unidad</h3><div class="tscroll"><table><thead><tr><th>Mes</th><th>Agua (m³)</th><th>$ por m³</th><th>Luz (kWh)</th><th>$ por kWh</th><th>Gas</th><th>$ por unidad</th></tr></thead><tbody>' +
+      cons.map((o, i) => (o.Agua || o.Luz || o.Gas) ? '<tr><td>' + MESES[i] + '</td>' + ['Agua', 'Luz', 'Gas'].map(c =>
+        '<td>' + (o[c] ? num(o[c]) : '') + '</td><td>' + (o[c] ? clp((m[i][c] || 0) / o[c]) : '') + '</td>').join('') + '</tr>' : '').join('') + '</tbody></table></div>';
+  }
+  const list = rows.filter(g => !fc || g.cat === fc).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  h += '<h3>Movimientos (' + list.length + ')</h3>' + (list.length ? '<div class="tscroll"><table><thead><tr><th>Fecha</th><th>Categoría</th><th>Monto</th><th>Detalle</th><th>Consumo</th><th>Estado</th><th></th></tr></thead><tbody>' +
+    list.map(g => '<tr><td>' + fmtD(g.fecha) + '</td><td>' + esc(g.cat) + '</td><td><b>' + clp(g.monto) + '</b></td><td>' + esc(g.detalle) +
+      (g.notas ? '<br><small style="color:var(--muted)">' + esc(g.notas) + '</small>' : '') + '</td><td>' + (g.consumo ? num(g.consumo) + ' ' + esc(g.unidad) : '') +
+      '</td><td><span class="chip ' + (g.estado === 'Pendiente' ? 'pend' : 'ok') + '">' + esc(g.estado) + '</span></td><td class="acts"><button data-gedit="' + g.id + '" title="Editar">✏️</button><button data-gdel="' + g.id + '" title="Eliminar">🗑</button></td></tr>').join('') +
+    '</tbody></table></div>' : '<div class="empty">Sin gastos registrados en ' + y + '. Pulsa “+ Nuevo gasto”.</div>');
+  $('gbody').innerHTML = h;
+}
+function openGForm(g){
+  $('gftitle').textContent = g ? 'Editar gasto' : 'Nuevo gasto';
+  $('gerr').textContent = '';
+  $('g_id').value = g ? g.id : '';
+  $('g_fecha').value = g ? g.fecha : today();
+  $('g_cat').value = g ? g.cat : 'Agua';
+  $('g_monto').value = g ? g.monto : '';
+  $('g_detalle').value = g ? g.detalle : '';
+  $('g_consumo').value = g && g.consumo !== '' ? g.consumo : '';
+  $('g_unidad').value = g ? g.unidad : (UNIT[$('g_cat').value] || '');
+  $('g_medio').value = g ? g.medio : '';
+  $('g_estado').value = g ? g.estado : 'Pagado';
+  $('g_notas').value = g ? g.notas : '';
+  $('gmodal').style.display = 'flex';
+  $('g_monto').focus();
+}
+$('gnew').addEventListener('click', () => openGForm(null));
+$('gcancel').addEventListener('click', () => $('gmodal').style.display = 'none');
+$('g_cat').addEventListener('change', () => { $('g_unidad').value = UNIT[$('g_cat').value] || ''; });
+$('gyear').addEventListener('change', renderGastos);
+$('gcat').addEventListener('change', renderGastos);
+$('grefresh').addEventListener('click', loadGastos);
+$('gf').addEventListener('submit', e => {
+  e.preventDefault();
+  const g = { id: $('g_id').value, fecha: $('g_fecha').value, cat: $('g_cat').value, monto: +$('g_monto').value,
+    detalle: $('g_detalle').value.trim(), consumo: $('g_consumo').value === '' ? '' : +$('g_consumo').value,
+    unidad: $('g_unidad').value, medio: $('g_medio').value, estado: $('g_estado').value, notas: $('g_notas').value.trim() };
+  if (!g.fecha || !g.cat || !(g.monto > 0)){ $('gerr').textContent = 'Completa fecha, categoría y un monto mayor a 0.'; return; }
+  $('gsave').disabled = true; $('gerr').textContent = 'Guardando…';
+  google.script.run
+    .withSuccessHandler(j => { $('gsave').disabled = false; $('gmodal').style.display = 'none'; gastosData(JSON.parse(j)); fillYears(+g.fecha.slice(0, 4)); renderGastos(); })
+    .withFailureHandler(err => { $('gsave').disabled = false; $('gerr').textContent = 'Error: ' + err.message; })
+    .saveGasto(g, PW);
+});
+$('gbody').addEventListener('click', e => {
+  const ed = e.target.closest('[data-gedit]');
+  if (ed){ openGForm(GASTOS.find(x => x.id === ed.dataset.gedit)); return; }
+  const dl = e.target.closest('[data-gdel]');
+  if (!dl) return;
+  const g = GASTOS.find(x => x.id === dl.dataset.gdel);
+  if (!confirm('¿Eliminar el gasto de ' + clp(g.monto) + ' (' + g.cat + ', ' + fmtD(g.fecha) + ')?')) return;
+  dl.disabled = true;
+  google.script.run
+    .withSuccessHandler(j => { gastosData(JSON.parse(j)); renderGastos(); })
+    .withFailureHandler(err => { dl.disabled = false; alert('Error: ' + err.message); })
+    .deleteGasto(g.id, PW);
+});
+
+/* ---------- Biblioteca ---------- */
+let LIB = null, LIBMAP = {}, COVERS = {}, covQueue = [], covBusy = false, covObs = null, LPW = '';
+try { LPW = sessionStorage.getItem('repo_lpw') || ''; } catch (e) {}
+function libLogin(msg){
+  $('grid').innerHTML = '<form id="llf" style="grid-column:1/-1;max-width:330px;margin:40px auto;background:#fff;padding:24px;border:1px solid var(--line);border-radius:12px;text-align:center">' +
+    '<h3 style="margin-top:0">🔒 Biblioteca</h3><p style="color:var(--muted);font-size:13px">Esta sección tiene una contraseña aparte.</p>' +
+    '<input id="lpw" type="password" placeholder="Contraseña de la biblioteca" autocomplete="off" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;margin:8px 0;font-size:15px">' +
+    '<button class="pri" style="width:100%">Entrar</button><div style="color:#c0392b;font-size:13px;margin-top:8px">'+esc(msg || '')+'</div></form>';
+  $('lpw').focus();
+}
+document.querySelector('.tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab'); if (!b) return;
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === b));
+  const tab = b.dataset.tab, lib = tab === 'lib';
+  $('libview').style.display = lib ? 'block' : 'none';
+  $('gastosview').style.display = tab === 'gastos' ? 'block' : 'none';
+  document.querySelector('.wrap').style.display = tab === 'docs' ? '' : 'none';
+  ['q', 'ftype', 'refresh', 'stats'].forEach(id => $(id).style.display = tab === 'docs' ? '' : 'none');
+  if (lib && !LIB) loadLib(false);
+  if (tab === 'gastos' && !GASTOS) loadGastos();
+});
+function loadLib(force){
+  if (!LPW) return libLogin();
+  $('grid').innerHTML = '<div class="msg">Cargando biblioteca…</div>';
+  google.script.run
+    .withSuccessHandler(json => {
+      const d = JSON.parse(json);
+      try { sessionStorage.setItem('repo_lpw', LPW); } catch (e) {}
+      if (d.disabled){ LIB = []; $('grid').innerHTML = '<div class="msg">La biblioteca aún no está configurada.</div>'; return; }
+      if (d.error){ $('grid').innerHTML = '<div class="msg">'+esc(d.error)+'</div>'; return; }
+      LIB = d.books; LIBMAP = {}; LIB.forEach(b => LIBMAP[b.id] = b);
+      const libs = d.libs || [];
+      $('llib').innerHTML = '<option value="">Todas las bibliotecas</option>' + libs.map(l => '<option>'+esc(l)+'</option>').join('');
+      $('llib').style.display = libs.length > 1 ? '' : 'none';
+      $('lstats').textContent = LIB.length + ' libros';
+      renderLib();
+    })
+    .withFailureHandler(e => {
+      if (/biblioteca|LIB_PASSWORD/i.test(e.message)){ LPW = ''; try { sessionStorage.removeItem('repo_lpw'); } catch (x) {} return libLogin(e.message); }
+      $('grid').innerHTML = '<div class="msg">Error: '+esc(e.message)+'</div>';
+    })
+    .getLibrary(!!force, PW, LPW);
+}
+function renderLib(){
+  if (!LIB) return;
+  const words = norm($('lq').value.trim()).split(/\s+/).filter(Boolean), s = $('lsort').value, lb = $('llib').value;
+  const list = LIB.filter(b => { if (lb && b.lib !== lb) return false; const h = norm(b.title+' '+b.authors+' '+b.series+' '+b.tags.join(' ')); return words.every(w => h.includes(w)); })
+    .sort((a, b) => s === 'recent' ? b.updated - a.updated : s === 'author' ? (a.authors.localeCompare(b.authors, 'es') || a.title.localeCompare(b.title, 'es')) : a.title.localeCompare(b.title, 'es'));
+  $('grid').innerHTML = list.length ? list.map(b => '<div class="book" data-book="'+b.id+'"><div class="cv" data-cv="'+b.cover+'">' +
+    (COVERS[b.cover] ? '<img src="'+COVERS[b.cover]+'" alt="">' : esc(b.title)) + '</div><div class="t">'+esc(b.title)+'</div><div class="a">'+esc(b.authors)+'</div></div>').join('')
+    : '<div class="msg">Sin resultados.</div>';
+  watchCovers();
+}
+function watchCovers(){
+  if (covObs) covObs.disconnect();
+  covObs = new IntersectionObserver(ents => {
+    ents.forEach(en => { if (!en.isIntersecting) return; const id = en.target.dataset.cv; covObs.unobserve(en.target);
+      if (id && !COVERS[id] && covQueue.indexOf(id) < 0) covQueue.push(id); });
+    pumpCovers();
+  }, { root: $('libview'), rootMargin: '500px' });
+  document.querySelectorAll('#grid .cv').forEach(el => { if (el.dataset.cv && !COVERS[el.dataset.cv]) covObs.observe(el); });
+}
+function pumpCovers(){
+  if (covBusy || !covQueue.length) return;
+  covBusy = true;
+  const ids = covQueue.splice(0, 12);
+  google.script.run
+    .withSuccessHandler(m => {
+      Object.keys(m).forEach(id => { COVERS[id] = m[id];
+        document.querySelectorAll('[data-cv="'+id+'"]').forEach(el => el.innerHTML = '<img src="'+m[id]+'" alt="">'); });
+      covBusy = false; pumpCovers();
+    })
+    .withFailureHandler(() => { covBusy = false; })
+    .getCovers(ids, PW, LPW);
+}
+$('lq').addEventListener('input', () => { clearTimeout(tmr); tmr = setTimeout(renderLib, 150); });
+$('lsort').addEventListener('change', renderLib);
+$('llib').addEventListener('change', renderLib);
+$('lrefresh').addEventListener('click', () => { LIB = null; loadLib(true); });
+$('grid').addEventListener('submit', e => { if (e.target.id === 'llf'){ e.preventDefault(); LPW = $('lpw').value; loadLib(false); } });
+$('grid').addEventListener('click', e => { const b = e.target.closest('[data-book]'); if (b) bookDetail(LIBMAP[b.dataset.book]); });
+
+function bookDetail(b){
+  $('mTitle').textContent = b.title;
+  $('mOpen').style.display = 'none'; $('mDl').style.display = 'none';
+  $('mMsg').style.display = 'none'; $('mFrame').style.display = 'none';
+  const v = $('mView'); v.style.display = 'block'; v.style.background = '#fff';
+  v.innerHTML = '<div class="bd"><div class="cv">' + (COVERS[b.cover] ? '<img src="'+COVERS[b.cover]+'" alt="">' : '') + '</div><div style="flex:1;min-width:0">' +
+    '<h3>'+esc(b.title)+'</h3><div style="color:var(--muted);margin-bottom:8px">'+esc(b.authors)+(b.year ? ' · '+esc(b.year) : '')+'</div>' +
+    (b.series ? '<div style="margin-bottom:6px">📚 '+esc(b.series)+'</div>' : '') +
+    (b.tags.length ? '<div style="margin-bottom:10px">'+b.tags.map(t => '<span class="chip">'+esc(t)+'</span>').join('')+'</div>' : '') +
+    (b.desc ? '<p style="line-height:1.55;color:#333">'+esc(b.desc)+'</p>' : '') +
+    '<div>' + b.formats.map(f => (/^(PDF|EPUB)$/.test(f.ext) ? '<button class="pri fmt" data-read="'+f.id+'">📖 Leer '+f.ext+'</button>' : '') +
+      '<button class="fmt" data-get="'+f.id+'">⬇ '+f.ext+' ('+size(f.size)+')</button>').join('') + '</div></div></div>';
+  $('modal').style.display = 'block';
+}
+function fmtById(id){ for (const b of LIB) for (const f of b.formats) if (f.id === id) return f; return null; }
+$('mView').addEventListener('click', e => {
+  const g = e.target.closest('[data-get]'); if (g){ fetchFile(fmtById(g.dataset.get), saveBlob, g); return; }
+  const r = e.target.closest('[data-read]'); if (r) readBook(fmtById(r.dataset.read), r);
+});
+function readBook(f, btn){
+  fetchFile(f, r => {
+    $('mTitle').textContent = f.name;
+    $('mOpen').style.display = ''; $('mDl').style.display = '';
+    $('mOpen').href = r.url; $('mDl').onclick = e => { e.preventDefault(); saveBlob(r); };
+    const v = $('mView'); v.innerHTML = ''; v.style.background = '#525659';
+    $('mMsg').style.display = 'block';
+    if (f.ext === 'PDF'){ $('mMsg').textContent = 'Abriendo PDF…'; renderPdf(r, v); }
+    else renderEpub(r, v);
+  }, btn);
+}
+const EPUBJS = ['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/epub.js/0.3.93/epub.min.js'];
+function loadScripts(urls){
+  return urls.reduce((p, u) => p.then(() => new Promise((ok, fail) => {
+    if (document.querySelector('script[src="'+u+'"]')) return ok();
+    const s = document.createElement('script'); s.src = u; s.onload = ok; s.onerror = () => fail(new Error('no se pudo cargar el lector'));
+    document.head.appendChild(s);
+  })), Promise.resolve());
+}
+async function renderEpub(r, v){
+  try {
+    $('mMsg').textContent = 'Abriendo libro…';
+    await loadScripts(EPUBJS);
+    v.style.background = '#fff'; v.style.display = 'flex'; v.style.flexDirection = 'column';
+    v.innerHTML = '<div id="epv" style="flex:1;min-height:300px"></div><div style="display:flex;justify-content:center;gap:10px;padding:8px"><button id="epPrev">◀ Anterior</button><button id="epNext">Siguiente ▶</button></div>';
+    const book = ePub(r.bytes.buffer.slice(0));
+    const rend = book.renderTo('epv', { width: '100%', height: '100%', spread: 'none' });
+    await rend.display();
+    $('mMsg').style.display = 'none';
+    $('epPrev').onclick = () => rend.prev(); $('epNext').onclick = () => rend.next();
+    v._keys = e => { if (e.key === 'ArrowRight') rend.next(); if (e.key === 'ArrowLeft') rend.prev(); };
+    document.addEventListener('keyup', v._keys);
+  } catch (e) {
+    $('mMsg').style.display = 'block';
+    $('mMsg').textContent = 'No se pudo abrir el EPUB (' + e.message + '). Usa Descargar.';
+  }
+}
+
+$('lf').addEventListener('submit', e => { e.preventDefault(); PW = $('pw').value; $('lerr').textContent = 'Verificando…'; load(false); });
+if (PW) load(false); else $('pw').focus();
+</script>
+</body>
+</html>
